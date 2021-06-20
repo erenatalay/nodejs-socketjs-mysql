@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <form onsubmit="return sendMessage();">
+        <input id="message" placeholder="Enter Message">
+        <input type="submit" value="send">
+    </form>
+
+    <ul id="messages"></ul>
+
+    <script src="js/socket.io.js"></script>
+    <script src="js/axios.min.js"></script>
+
+<script>
+     var server = "http://localhost:3000";
+    var io = io(server);
+
+    const sendMessage = () => {
+
+        let message = document.getElementById("message")
+        io.emit("new_message",message.value)
+
+        return false
+    }
+
+    axios.get(server + "/getmessages").then(response => {
+        let messages = document.getElementById("messages");
+
+        let data = response.data.data
+
+        data.map(item => {
+            let li = document.createElement("li");
+            li.innerHTML = item.text;
+            li.innerHTML += "<button data-id='" + item.id +"' onclick='deleteMessage(this)'> Deleted  </button>"
+            li.id = "messages-" + item.id
+
+            messages.appendChild(li)
+        })
+    })
+
+  
+
+
+
+    io.on("delete_message",function(id){
+        let node = document.getElementById("messages-"+id)
+        node.innerHTML = "this message has been deleted"
+    })
+
+    io.on("new_message",function(data){
+            console.log("server says",data)
+
+            // display message
+            let messages = document.getElementById("messages");
+            let li = document.createElement("li");
+            li.id = "messages-" + data.id
+            li.innerHTML = data.text;
+
+
+            li.innerHTML += "<button data-id='" + data.id +"'onclick='deleteMessage(this)'> Deleted  </button>"
+
+            messages.appendChild(li)
+    })
+
+
+    const deleteMessage = (self) => {
+        let id = self.getAttribute("data-id");
+        
+
+        io.emit("delete_message",id)
+    }
+</script>
+</body>
+</html>
+
+
